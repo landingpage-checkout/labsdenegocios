@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tarefas por cliente | LABS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F4F7; --surface:#FFFFFF; --ink:#101116; --muted:#6C707A; --line:#E2E4EA; --chip:#EDEEF2;
+  --accent:#4F6BF0; --urgent:#D64C3A; --bar:rgba(243,244,247,.86);
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C0D11; --surface:#14161C; --ink:#EDEEF1; --muted:#8B909B; --line:#23262F; --chip:#1C1F27;
+    --accent:#A0B0FF; --urgent:#FF7A66; --bar:rgba(12,13,17,.85); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C0D11; --surface:#14161C; --ink:#EDEEF1; --muted:#8B909B; --line:#23262F; --chip:#1C1F27;
+  --accent:#A0B0FF; --urgent:#FF7A66; --bar:rgba(12,13,17,.85); color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 90px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Schibsted Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+
+header.hero{padding:44px 0 28px}
+.brand{font-weight:800;letter-spacing:.32em;font-size:12px;color:var(--accent)}
+h1{font-size:clamp(34px,6vw,60px);line-height:1;letter-spacing:-.035em;font-weight:800;margin:14px 0 12px}
+.sub{color:var(--muted);margin:0;max-width:56ch}
+.stats{display:flex;gap:28px;margin-top:26px;flex-wrap:wrap}
+.stat b{display:block;font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.stat span{color:var(--muted);font-size:13px}
+.stat.u b{color:var(--urgent)}
+
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bar);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
+.filters{display:flex;gap:6px;flex-wrap:wrap;flex:1;align-items:center}
+.f{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.f .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.f .n{color:var(--muted);font-variant-numeric:tabular-nums}
+.f[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.f[aria-pressed="true"] .n{color:inherit;opacity:.7}
+.add{border:1px dashed var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:13px;color:var(--muted);cursor:pointer}
+.addform{display:none;gap:6px}
+.addform.on{display:inline-flex}
+.addform input{font:inherit;font-size:13px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 12px;width:130px}
+.dl{border:0;background:var(--accent);color:#0C0D11;font-weight:700;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:14px;white-space:nowrap}
+:root:not([data-theme="dark"]) .dl{color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .dl{color:#0C0D11}}
+.dl:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+main{padding:30px 0 70px}
+section.client{display:grid;grid-template-columns:220px 1fr;gap:28px;padding:28px 0;border-top:1px solid var(--line)}
+section.client:first-child{border-top:0}
+.cname{position:sticky;top:calc(env(safe-area-inset-top,0px) + 86px);align-self:start}
+.cname h2{font-size:22px;letter-spacing:-.02em;margin:0;font-weight:700}
+.cname p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.glabel{font-size:12.5px;font-weight:600;color:var(--muted);margin:18px 0 8px}
+.glabel:first-child{margin-top:0}
+.task{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:6px}
+.task.urgent{border-left:3px solid var(--urgent)}
+.tt{padding-top:3px}
+.tag{display:inline-block;font-size:11px;font-weight:700;color:var(--urgent);margin-right:8px;letter-spacing:.02em}
+.who{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;max-width:300px}
+.p{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;transition:background .12s,color .12s,border-color .12s}
+.p:hover{color:var(--ink);border-color:var(--c)}
+.p[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#0C0D11;font-weight:700}
+.fixed{font-size:12.5px;color:var(--muted);font-style:italic;padding-top:4px;text-align:right;max-width:200px}
+.task.hidden{display:none}
+section.client.hidden{display:none}
+.empty{color:var(--muted);padding:40px 0;display:none}
+[contenteditable]{outline:none;border-radius:6px;cursor:text}
+[contenteditable]:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+[contenteditable]:focus{background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
+[contenteditable]:empty::before{content:attr(data-ph);color:var(--muted);opacity:.7}
+.cname h2,.cname p,.glabel,.ttxt,.fixed,.sub,.date{padding:1px 4px;margin-left:-4px}
+.date{display:inline-block;color:var(--ink);font-weight:600;margin-top:10px}
+.tt{display:flex;align-items:baseline;gap:0;min-width:0}
+.ttxt{flex:1;min-width:0;word-break:break-word}
+.right{display:flex;gap:8px;align-items:flex-start;justify-content:flex-end}
+.acts{display:flex;gap:2px;opacity:.35;transition:opacity .12s}
+.task:hover .acts,.task:focus-within .acts{opacity:1}
+.ic{border:0;background:transparent;width:28px;height:28px;border-radius:8px;cursor:pointer;color:var(--muted);display:grid;place-items:center;font-size:15px;line-height:1}
+.ic:hover{background:var(--chip);color:var(--ink)}
+.ic.flag[aria-pressed="true"]{color:var(--urgent)}
+.ic.del:hover{color:var(--urgent)}
+.addtask{border:1px dashed var(--line);background:transparent;border-radius:12px;padding:9px 14px;width:100%;text-align:left;color:var(--muted);cursor:pointer;font-size:14px;margin-top:2px}
+.addtask:hover{color:var(--ink);border-color:var(--muted)}
+.delclient{border:0;background:transparent;color:var(--muted);font-size:12.5px;padding:0;margin-top:10px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.delclient:hover{color:var(--urgent)}
+.addclient{display:block;width:100%;border:1.5px dashed var(--line);background:transparent;border-radius:14px;padding:22px;font-size:16px;font-weight:600;color:var(--muted);cursor:pointer;margin-top:24px}
+.addclient:hover{color:var(--ink);border-color:var(--muted)}
+.f .x{margin-left:2px;margin-right:-4px;opacity:.5;border:0;background:transparent;padding:0 2px;cursor:pointer;font-size:14px;line-height:1;color:inherit}
+.f .x:hover{opacity:1}
+.reset{border:0;background:transparent;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;margin-top:36px;padding:0}
+.toast button{border:0;background:transparent;color:var(--accent);font-weight:700;margin-left:12px;cursor:pointer;padding:0}
+.toast.on{pointer-events:auto}
+@media (max-width:720px){.acts{opacity:.7}.right{justify-content:space-between}}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media (max-width:720px){
+  section.client{grid-template-columns:1fr;gap:12px}
+  .cname{position:static}
+  .task{grid-template-columns:1fr}
+  .who{justify-content:flex-start;max-width:none}
+  .fixed{text-align:left}
+  .dl{width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="hero wrap">
+  <div class="brand">LABS</div>
+  <h1>Tarefas por cliente</h1>
+  <p class="sub">Toque no nome de quem vai fazer cada tarefa. Qualquer texto pode ser editado: clique nele e escreva. Quando estiver tudo certo, baixe o PDF para enviar aos sócios.</p>
+  <div class="date" id="date" contenteditable="plaintext-only" spellcheck="false" data-ph="Período (ex.: semana de 22 de setembro)"></div>
+  <div class="stats">
+    <div class="stat"><b id="sTotal">0</b><span>tarefas</span></div>
+    <div class="stat u"><b id="sUrg">0</b><span>urgentes</span></div>
+    <div class="stat"><b id="sOpen">0</b><span>sem responsável</span></div>
+  </div>
+</header>
+<div class="bar"><div class="wrap">
+  <div class="filters" id="filters"></div>
+  <button class="dl" id="dl">Baixar PDF</button>
+</div></div>
+<main class="wrap"><div id="list"></div><p class="empty" id="empty">Nenhuma tarefa com esse filtro.</p><button class="addclient" id="addclient">+ Adicionar cliente</button><button class="reset" id="reset">Restaurar a lista original</button></main>
+<div class="toast" id="toast" role="status"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const SEED = [
+  { client: "Meta Corretora", groups: [
+    { label: "Fluxo acordado", tasks: [
+      { id: "meta-f1", text: "Captar, editar e postar no Instagram, TikTok etc.", fixed: "Rodrigo e Fernando (cliente)" },
+      { id: "meta-f2", text: "Editar os 2 vídeos de depoimento" },
+      { id: "meta-f3", text: "Liberar o acesso ao nosso drive de material para eles também editarem" },
+      { id: "meta-f4", text: "Alinhar o calendário de eventos (Setembro Amarelo, Outubro Rosa, Novembro Azul, Ação de Graças, Natal, Ano Novo) para ativações leves da marca" }
+    ]},
+    { label: "Pendências", tasks: [
+      { id: "meta-p1", text: "Enviar o fluxograma com as funções de cada um", urgent: true },
+      { id: "meta-p2", text: "Definir o dia fixo de reunião" },
+      { id: "meta-p3", text: "Subir nova campanha para atrair novos públicos" },
+      { id: "meta-p4", text: "Desenhar o caminho comercial: como atender quem chega pela DM e pelo WhatsApp e para onde direcionar, para abrir relacionamento e converter" }
+    ]}
+  ]},
+  { client: "Olam", groups: [{ tasks: [
+    { id: "olan-1", text: "Iniciar a campanha", urgent: true },
+    { id: "olan-2", text: "Conseguir os acessos às redes do Lucas e da Pamela", urgent: true },
+    { id: "olan-3", text: "Corrigir os detalhes de arte do carrossel e subir em collab" },
+    { id: "olan-4", text: "Enviar a persona (quem compra deles)" },
+    { id: "olan-5", text: "Enviar roteiros, principalmente de stories, para o Lucas e a Pamela gravarem e mandarem até a semana que vem" },
+    { id: "olan-6", text: "Definir o dia fixo de reunião" }
+  ]}]},
+  { client: "Iara", note: "Consultora de planos de saúde", groups: [{ tasks: [
+    { id: "yara-1", text: "Subir a edição dos 5 vídeos" },
+    { id: "yara-2", text: "Enviar ideias de roteiro de stories para ela continuar postando" },
+    { id: "yara-3", text: "Manter a campanha atual rodando" }
+  ]}]},
+  { client: "Vivale", groups: [{ tasks: [
+    { id: "viv-1", text: "Enviar os links dos pacotes e a lista completa de destinos (já se cadastraram na consolidadora)", fixed: "Aguardando delas" },
+    { id: "viv-2", text: "Montar uma LP para cada destino com o material delas; pedir fotos, vídeos e infos de cada pacote junto com os links" },
+    { id: "viv-3", text: "Atualizar o site para o domínio certo e para a entrada nas consolidadoras" },
+    { id: "viv-4", text: "Remarcar a reunião desta sexta de manhã", urgent: true }
+  ]}]},
+  { client: "Cacheadu's", groups: [
+    { label: "Esta semana", tasks: [
+      { id: "cach-opi", text: "Implementação da Opi", urgent: true },
+      { id: "cach-sec", text: "Implementação das secretárias", urgent: true },
+      { id: "cach-creators", text: "Desenvolver parceria com creators" },
+      { id: "cach-1", text: "Terminar as edições dos vídeos: faltam alguns da linha Home Care e todos da linha Profissional" },
+      { id: "cach-2", text: "Decidir como entregar o material aos distribuidores: site secreto ou Google Drive" },
+      { id: "cach-3", text: "Organizar o catálogo para os distribuidores" },
+      { id: "cach-4", text: "Refazer a LP do e-commerce (em andamento)" },
+      { id: "cach-5", text: "TikTok Shop: descobrir por que o acesso não funciona ou criar um perfil novo" }
+    ]},
+    { label: "Semana que vem", tasks: [
+      { id: "cach-info", text: "Gravação dos infoprodutos da Elis" },
+      { id: "cach-pixel", text: "Configuração do pixel da Elis" }
+    ]}
+  ]},
+  { client: "Speak", groups: [{ tasks: [
+    { id: "speak-1", text: "Definir o dia de gravação: ainda esta semana ou na terça que vem", urgent: true },
+    { id: "speak-2", text: "Enviar o roteiro para a Rafa e a Déborah gravarem" },
+    { id: "speak-3", text: "Produzir os criativos da nova campanha" },
+    { id: "speak-4", text: "Criar campanhas para grupos de nicho, para formar turmas" }
+  ]}]},
+  { client: "L2M", groups: [{ tasks: [
+    { id: "l2m-1", text: "Definir o formato das campanhas de suporte de TI" },
+    { id: "l2m-2", text: "Definir as métricas de prospecção ativa, conhecimento de marca e ativação" }
+  ]}]},
+  { client: "LABS", groups: [{ tasks: [
+    { id: "labs-1", text: "Editar os nossos vídeos" },
+    { id: "labs-2", text: "Subir a propaganda da secretária", urgent: true },
+    { id: "labs-3", text: "Prospecção ativa nos nichos de cosméticos, salões e corretores" },
+    { id: "labs-4", text: "LP da marca" }
+  ]}]}
+];
+const D = "Déborah", L = "Leandro", M = "Marlon";
+const SEED_ASSIGN = {
+  "meta-f2": [D], "meta-f3": [M], "meta-f4": [D], "meta-p1": [L], "meta-p2": [L], "meta-p3": [M], "meta-p4": [D],
+  "olan-1": [M], "olan-2": [L], "olan-3": [D], "olan-4": [D], "olan-5": [L], "olan-6": [L],
+  "yara-1": [D], "yara-2": [D, L], "yara-3": [M],
+  "viv-2": [L], "viv-3": [L], "viv-4": [D],
+  "cach-opi": [M, L], "cach-sec": [L, M], "cach-creators": [D], "cach-1": [D], "cach-2": [D, L, M], "cach-3": [D, L, M], "cach-4": [D], "cach-5": [D, L, M],
+  "cach-info": [L, D, M], "cach-pixel": [M],
+  "speak-1": [L], "speak-2": [L], "speak-3": [L, M], "speak-4": [D, L, M],
+  "l2m-1": [L, M], "l2m-2": [D, L, M],
+  "labs-1": [D, M], "labs-2": [D, M], "labs-3": [D, L], "labs-4": [D]
+};
+
+const DEFAULT_TEAM = ["Déborah", "Leandro", "Marlon"];
+const PALETTE = ["#6E8BFF", "#E0A43A", "#2FB58F", "#D46BB8", "#E0674F", "#46A8D8"];
+
+function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function tint(rgb, t) { return rgb.map(c => Math.round(c + (255 - c) * t)); }
+
+function buildPdf(jsPDF, state, dateLabel) {
+  const DATA = state.data.map(c => ({ ...c, groups: c.groups.map(g => ({ ...g, tasks: g.tasks.filter(t => t.text.trim()) })).filter(g => g.tasks.length) })).filter(c => c.groups.length);
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const W = 210, H = 297, M = 18, COLX = 140, COLW = W - M - COLX;
+  const INK = [16, 17, 22], MUTED = [120, 124, 134], LINE = [226, 228, 233], URG = [214, 76, 58];
+  const color = name => { const i = state.team.indexOf(name); return hexToRgb(PALETTE[(i < 0 ? 0 : i) % PALETTE.length]); };
+  let y = 0, page = 1;
+
+  function footer() {
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...MUTED);
+    doc.text("LABS  |  Tarefas por cliente  |  " + dateLabel, M, H - 10);
+    doc.text(String(page), W - M, H - 10, { align: "right" });
+  }
+  function newPage() { footer(); doc.addPage(); page++; y = M + 4; }
+  function ensure(h) { if (y + h > H - 20) newPage(); }
+
+  // header band
+  doc.setFillColor(...INK); doc.rect(0, 0, W, 50, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(160, 176, 255);
+  doc.setCharSpace(1.6); doc.text("LABS", M, 17); doc.setCharSpace(0);
+  doc.setFontSize(24); doc.setTextColor(255, 255, 255); doc.text("Tarefas por cliente", M, 31);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); doc.setTextColor(185, 189, 198);
+  doc.text(dateLabel, M, 40);
+  const total = DATA.reduce((a, c) => a + c.groups.reduce((b, g) => b + g.tasks.length, 0), 0);
+  const urg = DATA.reduce((a, c) => a + c.groups.reduce((b, g) => b + g.tasks.filter(t => t.urgent).length, 0), 0);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.setTextColor(255, 255, 255);
+  doc.text(String(total), W - M - 30, 31, { align: "right" });
+  doc.setTextColor(255, 128, 110); doc.text(String(urg), W - M, 31, { align: "right" });
+  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(185, 189, 198);
+  doc.text("tarefas", W - M - 30, 37, { align: "right" }); doc.text("urgentes", W - M, 37, { align: "right" });
+  y = 64;
+
+  function pillsLayout(names) {
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5);
+    const rows = [[]]; let x = 0;
+    names.forEach(n => {
+      const w = doc.getTextWidth(n) + 5;
+      if (x + w > COLW && rows[rows.length - 1].length) { rows.push([]); x = 0; }
+      rows[rows.length - 1].push({ n, w, x }); x += w + 1.5;
+    });
+    return rows;
+  }
+
+  DATA.forEach(c => {
+    ensure(24);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13.5); doc.setTextColor(...INK);
+    doc.text(c.client, M, y);
+    if (c.note) { const cw = doc.getTextWidth(c.client); doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(...MUTED); doc.text(c.note, M + cw + 3, y); }
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...MUTED);
+    doc.text("Responsável", COLX, y);
+    y += 3; doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, y, W - M, y); y += 5.5;
+
+    c.groups.forEach(g => {
+      if (g.label) { ensure(12); doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...MUTED); doc.text(g.label, M, y); y += 5; }
+      g.tasks.forEach(t => {
+        doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+        const tx = M + 5, tw = COLX - tx - 6;
+        const prefix = t.urgent ? "URGENTE  " : "";
+        const lines = doc.splitTextToSize(prefix + t.text, tw);
+        const names = t.fixed ? null : (state.assign[t.id] || []);
+        const rows = names && names.length ? pillsLayout(names) : [[]];
+        const hText = lines.length * 4.6, hPills = rows.length * 6;
+        const h = Math.max(hText, hPills) + 2.4;
+        ensure(h + 2);
+        doc.setFillColor(...(t.urgent ? URG : [170, 174, 184])); doc.circle(M + 1.2, y - 1.3, 0.9, "F");
+        lines.forEach((ln, i) => {
+          let lx = tx;
+          doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+          if (i === 0 && t.urgent) {
+            doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...URG);
+            doc.text("URGENTE", lx, y); lx += doc.getTextWidth("URGENTE") + 2.2;
+            doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+            ln = ln.replace(/^URGENTE\s+/, "");
+          }
+          doc.setTextColor(...INK); doc.text(ln, lx, y + i * 4.6);
+        });
+        // pills
+        if (t.fixed) {
+          doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(...MUTED);
+          doc.text(doc.splitTextToSize(t.fixed, COLW), COLX, y);
+        } else if (!names.length) {
+          doc.setDrawColor(200, 203, 210); doc.setLineWidth(0.25); doc.setLineDashPattern([0.8, 0.8], 0);
+          doc.roundedRect(COLX, y - 3.6, 17, 5, 2.5, 2.5, "S"); doc.setLineDashPattern([], 0);
+          doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...MUTED);
+          doc.text("a definir", COLX + 8.5, y - 0.3, { align: "center" });
+        } else {
+          rows.forEach((r, ri) => r.forEach(p => {
+            const rgb = color(p.n), py = y - 3.6 + ri * 6;
+            doc.setFillColor(...tint(rgb, 0.82)); doc.roundedRect(COLX + p.x, py, p.w, 5, 2.5, 2.5, "F");
+            doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...rgb.map(v => Math.round(v * 0.62)));
+            doc.text(p.n, COLX + p.x + p.w / 2, py + 3.4, { align: "center" });
+          }));
+        }
+        y += h;
+      });
+      y += 1.5;
+    });
+    y += 6;
+  });
+
+  // per person summary
+  newPage();
+  doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(...INK);
+  doc.text("Por responsável", M, y + 4); y += 14;
+  const people = state.team.slice();
+  const byPerson = {}; people.forEach(p => byPerson[p] = []);
+  const unassigned = [];
+  DATA.forEach(c => c.groups.forEach(g => g.tasks.forEach(t => {
+    if (t.fixed) return;
+    const n = state.assign[t.id] || [];
+    if (!n.length) unassigned.push({ c: c.client, t });
+    n.forEach(p => { (byPerson[p] = byPerson[p] || []).push({ c: c.client, t }); });
+  })));
+  const sections = people.filter(p => byPerson[p].length).map(p => ({ name: p, items: byPerson[p], rgb: color(p) }));
+  if (unassigned.length) sections.push({ name: "A definir", items: unassigned, rgb: [150, 154, 164] });
+  sections.forEach(s => {
+    ensure(18);
+    doc.setFillColor(...s.rgb); doc.circle(M + 1.6, y - 1.4, 1.6, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(...INK); doc.text(s.name, M + 6, y);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(...MUTED);
+    doc.text(s.items.length + (s.items.length === 1 ? " tarefa" : " tarefas"), W - M, y, { align: "right" });
+    y += 3; doc.setDrawColor(...LINE); doc.line(M, y, W - M, y); y += 5;
+    s.items.forEach(({ c, t }) => {
+      doc.setFontSize(9.5);
+      const lines = doc.splitTextToSize(t.text, W - M - (M + 42));
+      ensure(lines.length * 4.4 + 2);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(8.5); doc.setTextColor(...MUTED); doc.text(c, M + 6, y);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); doc.setTextColor(...(t.urgent ? URG : INK));
+      doc.text(lines, M + 42, y);
+      y += lines.length * 4.4 + 1.8;
+    });
+    y += 6;
+  });
+  if (!sections.length) { doc.setFontSize(10); doc.setTextColor(...MUTED); doc.text("Nenhuma tarefa atribuída ainda.", M, y); }
+  footer();
+  return doc;
+}
+
+const KEY = "labs-tarefas-v2";
+const clone = o => JSON.parse(JSON.stringify(o));
+const uid = () => "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function fresh() {
+  const s = { team: DEFAULT_TEAM.slice(), assign: clone(SEED_ASSIGN), data: clone(SEED), dateLabel: "Semana de 22 de setembro de 2026" };
+  s.data.forEach((c, i) => { c.id = c.id || "c" + i; });
+  return s;
+}
+let state = fresh();
+try {
+  const s = JSON.parse(localStorage.getItem(KEY) || "null");
+  if (s && s.team && s.assign) { state = Object.assign(fresh(), s); }
+} catch (e) {}
+state.team = state.team.filter(n => n !== "Bia");
+Object.keys(state.assign).forEach(k => { state.assign[k] = state.assign[k].filter(n => n !== "Bia"); });
+state.data.forEach((c, i) => { c.id = c.id || "c" + i; });
+
+let saveT; function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }, 150); }
+let filter = "all";
+const colorOf = n => PALETTE[Math.max(0, state.team.indexOf(n)) % PALETTE.length];
+const allTasks = () => state.data.flatMap(c => c.groups.flatMap(g => g.tasks));
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+
+function editable(node, value, ph, onChange) {
+  node.setAttribute("contenteditable", "plaintext-only"); node.spellcheck = true;
+  node.dataset.ph = ph; node.textContent = value || "";
+  node.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); node.blur(); } });
+  node.addEventListener("paste", e => { e.preventDefault(); const t = (e.clipboardData || window.clipboardData).getData("text").replace(/\s+/g, " "); document.execCommand("insertText", false, t); });
+  node.addEventListener("input", () => { onChange(node.textContent); save(); });
+  node.addEventListener("blur", () => { const v = node.textContent.replace(/\s+/g, " ").trim(); if (v !== node.textContent) node.textContent = v; onChange(v); save(); renderFilters(); renderStats(); });
+  return node;
+}
+
+let undoSnap = null, tt;
+function toast(m, undo) {
+  const e = document.getElementById("toast"); e.innerHTML = ""; e.appendChild(document.createTextNode(m));
+  if (undo) { const b = el("button", null, "Desfazer"); b.onclick = () => { state = undoSnap; undoSnap = null; save(); render(); e.classList.remove("on"); }; e.appendChild(b); }
+  e.classList.add("on"); clearTimeout(tt); tt = setTimeout(() => e.classList.remove("on"), undo ? 6000 : 3200);
+}
+function snapshot() { undoSnap = clone(state); }
+
+function matches(t) {
+  if (filter === "all") return true;
+  const a = state.assign[t.id] || [];
+  if (filter === "__none") return !t.fixed && !a.length;
+  return a.includes(filter);
+}
+
+function renderFilters() {
+  const f = document.getElementById("filters"); f.innerHTML = "";
+  const tasks = allTasks();
+  const mk = (key, label, count, color, removable) => {
+    const b = el("button", "f"); b.setAttribute("aria-pressed", filter === key);
+    if (color) { b.style.setProperty("--c", color); b.appendChild(el("span", "dot")); }
+    b.appendChild(document.createTextNode(label)); b.appendChild(el("span", "n", count));
+    b.onclick = () => { filter = key; render(); };
+    if (removable) {
+      const x = el("span", "x", "×"); x.setAttribute("role", "button"); x.setAttribute("aria-label", "Remover " + label + " da equipe"); x.title = "Remover da equipe";
+      x.onclick = ev => {
+        ev.stopPropagation(); snapshot();
+        state.team = state.team.filter(n => n !== key);
+        Object.keys(state.assign).forEach(k => state.assign[k] = state.assign[k].filter(n => n !== key));
+        if (filter === key) filter = "all"; save(); render(); toast(label + " saiu da equipe.", true);
+      };
+      b.appendChild(x);
+    }
+    f.appendChild(b);
+  };
+  mk("all", "Todas", tasks.length);
+  state.team.forEach(n => mk(n, n, tasks.filter(t => (state.assign[t.id] || []).includes(n)).length, colorOf(n), true));
+  mk("__none", "Sem responsável", tasks.filter(t => !t.fixed && !(state.assign[t.id] || []).length).length);
+  const add = el("button", "add", "+ pessoa");
+  const form = el("span", "addform"); const inp = el("input"); inp.placeholder = "Nome"; inp.maxLength = 20; inp.setAttribute("aria-label", "Nome da pessoa");
+  const ok = el("button", "add", "Adicionar");
+  const commit = () => { const v = inp.value.trim(); if (v && !state.team.includes(v)) { state.team.push(v); save(); } render(); };
+  ok.onclick = commit; inp.onkeydown = e => { if (e.key === "Enter") commit(); if (e.key === "Escape") render(); };
+  form.append(inp, ok);
+  add.onclick = () => { add.style.display = "none"; form.classList.add("on"); inp.focus(); };
+  f.append(add, form);
+}
+
+function addTask(g) {
+  const t = { id: uid(), text: "" };
+  g.tasks.push(t);
+  if (filter !== "all" && filter !== "__none") state.assign[t.id] = [filter];
+  save(); render();
+  const n = document.querySelector('[data-tid="' + t.id + '"]'); if (n) n.focus();
+}
+
+function renderList() {
+  const list = document.getElementById("list"); list.innerHTML = ""; let shown = 0;
+  state.data.forEach((c, ci) => {
+    const sec = el("section", "client"); const side = el("div", "cname");
+    side.appendChild(editable(el("h2"), c.client, "Nome do cliente", v => c.client = v));
+    side.appendChild(editable(el("p"), c.note, "Descrição (opcional)", v => c.note = v));
+    const dc = el("button", "delclient", "Excluir cliente");
+    dc.onclick = () => { snapshot(); const name = c.client || "Cliente"; state.data.splice(ci, 1); save(); render(); toast(name + " foi excluído.", true); };
+    side.appendChild(dc);
+    const body = el("div"); let visible = 0;
+    c.groups.forEach(g => {
+      const vis = g.tasks.filter(matches);
+      if (!vis.length && filter !== "all") return;
+      if (g.label !== undefined || c.groups.length > 1) body.appendChild(editable(el("div", "glabel"), g.label, "Nome do grupo", v => g.label = v));
+      vis.forEach(t => {
+        visible++;
+        const row = el("div", "task" + (t.urgent ? " urgent" : ""));
+        const tt = el("div", "tt"); if (t.urgent) tt.appendChild(el("span", "tag", "URGENTE"));
+        const txt = editable(el("div", "ttxt"), t.text, "Escreva a tarefa", v => t.text = v); txt.dataset.tid = t.id;
+        tt.appendChild(txt); row.appendChild(tt);
+        const right = el("div", "right");
+        if (t.fixed !== undefined) right.appendChild(editable(el("div", "fixed"), t.fixed, "Responsável externo", v => t.fixed = v));
+        else {
+          const who = el("div", "who");
+          state.team.forEach(n => {
+            const on = (state.assign[t.id] || []).includes(n);
+            const b = el("button", "p", n); b.style.setProperty("--c", colorOf(n));
+            b.setAttribute("aria-pressed", on); b.setAttribute("aria-label", (on ? "Remover " : "Atribuir a ") + n);
+            b.onclick = () => { const a = state.assign[t.id] || []; state.assign[t.id] = on ? a.filter(x => x !== n) : a.concat(n); save(); render(); };
+            who.appendChild(b);
+          });
+          right.appendChild(who);
+        }
+        const acts = el("div", "acts");
+        const fl = el("button", "ic flag", "!"); fl.style.fontWeight = "800";
+        fl.setAttribute("aria-pressed", !!t.urgent); fl.title = t.urgent ? "Tirar urgência" : "Marcar como urgente"; fl.setAttribute("aria-label", fl.title);
+        fl.onclick = () => { t.urgent = !t.urgent; save(); render(); };
+        const del = el("button", "ic del", "×"); del.title = "Excluir tarefa"; del.setAttribute("aria-label", "Excluir tarefa");
+        del.onclick = () => { snapshot(); g.tasks.splice(g.tasks.indexOf(t), 1); delete state.assign[t.id]; save(); render(); toast("Tarefa excluída.", true); };
+        acts.append(fl, del); right.appendChild(acts);
+        row.appendChild(right);
+        body.appendChild(row);
+      });
+      const at = el("button", "addtask", "+ Adicionar tarefa"); at.onclick = () => addTask(g); body.appendChild(at);
+    });
+    shown += visible;
+    if (!visible && filter !== "all") return;
+    sec.append(side, body); list.appendChild(sec);
+  });
+  document.getElementById("empty").style.display = (shown || filter === "all") ? "none" : "block";
+}
+
+function renderStats() {
+  const t = allTasks();
+  document.getElementById("sTotal").textContent = t.length;
+  document.getElementById("sUrg").textContent = t.filter(x => x.urgent).length;
+  document.getElementById("sOpen").textContent = t.filter(x => x.fixed === undefined && !(state.assign[x.id] || []).length).length;
+}
+function render() { renderFilters(); renderList(); renderStats(); }
+
+const dateEl = document.getElementById("date");
+editable(dateEl, state.dateLabel, "Período (ex.: semana de 22 de setembro)", v => state.dateLabel = v);
+render();
+
+document.getElementById("addclient").onclick = () => {
+  const c = { id: uid(), client: "", groups: [{ tasks: [] }] };
+  state.data.push(c); filter = "all"; save(); render();
+  const hs = document.querySelectorAll(".cname h2"); const h = hs[hs.length - 1]; if (h) { h.scrollIntoView({ block: "center" }); h.focus(); }
+};
+document.getElementById("reset").onclick = () => { snapshot(); state = fresh(); filter = "all"; dateEl.textContent = state.dateLabel; save(); render(); toast("Lista original restaurada.", true); };
+
+const dl = document.getElementById("dl");
+let downloads = null;
+(async () => {
+  try { if (window.claude && window.claude.use) downloads = await window.claude.use("downloads"); } catch (e) {}
+
+})();
+dl.onclick = async () => {
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  if (!window.jspdf) { toast("Não foi possível carregar o gerador de PDF. Confira sua conexão."); return; }
+  const doc = buildPdf(window.jspdf.jsPDF, state, state.dateLabel || "");
+  if (!downloads) { doc.save("LABS-tarefas-por-cliente.pdf"); toast("PDF baixado."); return; }
+  try {
+    await downloads.save({ filename: "LABS-tarefas-por-cliente.pdf", data: doc.output("blob") });
+    toast("PDF salvo.");
+  } catch (e) {
+    if (e && e.code === "declined") return;
+    if (e && e.code === "rate_limited") { toast("Já existe um download aberto. Tente de novo em instantes."); return; }
+    toast("Não foi possível salvar o PDF.");
+  }
+};
+</script>
+</body>
+</html>
